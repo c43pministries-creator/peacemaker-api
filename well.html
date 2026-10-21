@@ -139,7 +139,7 @@
         <div class="forums-bar" id="forumBar"></div>
         <div class="shield-error" id="wallError"></div>
         <div class="content-area" id="feed">
-            <!-- Posts will load here from the cloud -->
+            <div class='thinking'>Waking up the server... this might take up to 50 seconds. Please wait.</div>
         </div>
         <div class="input-area">
             <input type="text" id="postInput" placeholder="Share something kind..." autocomplete="off">
@@ -181,7 +181,6 @@
             { id: "updates", title: "Peace Place Updates" }
         ];
 
-        // Projects stay in local storage for now
         const defaultProjects = [
             { id: 1, title: "Community Garden App", desc: "We need a way to track who is watering the plants at Eagle's Nest.", members: 3, maxMembers: 6, aiEnabled: true },
             { id: 2, title: "JailBird's Menu Design", desc: "Looking for 2 people to help design the new breakfast menu layout.", members: 6, maxMembers: 6, aiEnabled: false }
@@ -227,7 +226,11 @@
         async function renderFeed() {
             if (currentTab !== 'wall') return;
             const feed = document.getElementById('feed');
-            feed.innerHTML = "<div class='thinking'>Waking up the server... this might take 30 seconds.</div>";
+            
+            // Only show "Waking up" if the feed is empty (to prevent flashing)
+            if (feed.innerHTML.trim() === "" || feed.innerHTML.includes("Waking up")) {
+                feed.innerHTML = "<div class='thinking'>Waking up the server... this might take up to 50 seconds.</div>";
+            }
 
             try {
                 const response = await fetch(`${API_URL}/posts/${currentForum}`);
@@ -240,7 +243,6 @@
                 } else {
                     posts.forEach(p => {
                         const card = document.createElement('div');
-                        // If the author is the Globe, make it look like the Globe
                         const isGlobe = p.author === "The Peacemaker Globe";
                         card.className = `post-card ${isGlobe ? 'globe' : ''}`;
                         card.innerHTML = `
@@ -254,7 +256,7 @@
                     });
                 }
             } catch (error) {
-                feed.innerHTML = "<div class='thinking' style='color: var(--danger);'>Could not reach the server.</div>";
+                feed.innerHTML = "<div class='thinking' style='color: var(--danger);'>Could not reach the server. Please wait a minute and refresh.</div>";
             }
 
             if (isThinking) {
@@ -293,7 +295,6 @@
             
             if (!text || isThinking) return;
 
-            // Client-side Peace Shield Check
             if (text.toLowerCase().includes("whatsapp") || text.toLowerCase().includes("crypto")) {
                 errorBox.style.display = "block";
                 errorBox.innerText = "Peace Shield Blocked: Off-platform migration and financial requests are not allowed.";
@@ -333,7 +334,7 @@
                     
                     isThinking = false;
                     sendBtn.disabled = false;
-                    renderFeed(); // Reload the feed with the new posts from the server
+                    renderFeed(); 
                 }, 1500);
 
             } catch (error) {
@@ -403,9 +404,12 @@
             if (e.key === 'Enter') submitPost();
         });
 
-        renderForums();
-        renderFeed();
-        renderProjects();
+        // Force the page to wait until it's fully loaded before fetching from the cloud
+        window.addEventListener('DOMContentLoaded', () => {
+            renderForums();
+            renderFeed();
+            renderProjects();
+        });
     </script>
 </body>
 </html>
