@@ -9,7 +9,7 @@ app = FastAPI(title="The Well of Peace API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], 
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -47,7 +47,8 @@ init_db()
 def get_posts(forum_id: str):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT author, content, forum, timestamp FROM posts WHERE forum = ?", (forum_id,))
+    # We only want the latest 50 posts to keep it fast
+    cursor.execute("SELECT author, content, forum, timestamp FROM posts WHERE forum = ? ORDER BY timestamp ASC", (forum_id,))
     rows = cursor.fetchall()
     conn.close()
     return [{"author": row[0], "content": row[1], "forum": row[2], "timestamp": row[3]} for row in rows]
@@ -59,10 +60,11 @@ def create_post(post: Post):
 
     conn = get_db()
     cursor = conn.cursor()
-    # Save the current time in milliseconds
+    
     current_time = time.time() * 1000 
     cursor.execute("INSERT INTO posts (author, content, forum, timestamp) VALUES (?, ?, ?, ?)", 
                    (post.author, post.content, post.forum, current_time))
+    
     conn.commit()
     conn.close()
     
