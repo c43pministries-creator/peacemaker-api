@@ -5,8 +5,9 @@ from typing import List
 import sqlite3
 import time
 import os
+import requests
 
-app = FastAPI(title="The Well of Peace API")
+app = FastAPI(title="The Well of Peace & Peacemaker API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,6 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- WELL OF PEACE MODELS ---
 class Post(BaseModel):
     author: str
     content: str
@@ -44,6 +46,7 @@ def init_db():
 
 init_db()
 
+# --- WELL OF PEACE ENDPOINTS ---
 @app.get("/posts/{forum_id}", response_model=List[PostResponse])
 def get_posts(forum_id: str):
     conn = get_db()
@@ -67,18 +70,45 @@ def create_post(post: Post):
     conn.close()
     return {"status": "success"}
 
-# NEW: The endpoint for Own U to upload ID images
+# --- OWN U ENDPOINT ---
 @app.post("/upload_id")
 async def upload_id(file: UploadFile = File(...)):
     try:
-        # Save the image to a folder called "id_uploads"
         os.makedirs("id_uploads", exist_ok=True)
         file_path = f"id_uploads/{file.filename}"
-        
         with open(file_path, "wb") as buffer:
             content = await file.read()
             buffer.write(content)
-            
         return {"status": "success", "message": "ID received successfully", "filename": file.filename}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- NEW: THE PEACEMAKER WEB CHAT ENDPOINT ---
+# REPLACE THIS URL WITH YOUR NGROK URL (e.g., https://xxxx-xx-xx-xx-xx.ngrok-free.app)
+OLLAMA_URL = "https://belfast-nations-excited-mandatory.trycloudflare.com/api/generate" 
+MODEL_NAME = "gemma:2b"
+
+class ChatRequest(BaseModel):
+    message: str
+
+@app.post("/chat")
+def chat(request: ChatRequest):
+    prompt = f"You are The Peacemaker. You are a companion, not a servant. You walk beside the user. Reply warmly and briefly to this message: '{request.message}'"
+    
+    payload = {
+        "model": MODEL_NAME,
+        "prompt": prompt,
+        "stream": False
+    }
+    
+    try:
+        response = requests.post(OLLAMA_URL, json=payload, timeout=300)
+        ai_reply = response.json().get("response", "").strip()
+        return {"reply": ai_reply}
+    except Exception as e:
+        print(f"Ollama Error: {e}")
+        raise HTTPException(status_code=500, detail="The Peacemaker is having trouble connecting to the brain.")
+
+@app.get("/")
+def read_root():
+    return {"message": "The Peacemaker Web Server is running."}
