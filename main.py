@@ -85,7 +85,7 @@ async def upload_id(file: UploadFile = File(...)):
 
 # --- NEW: THE PEACEMAKER WEB CHAT ENDPOINT ---
 # REPLACE THIS URL WITH YOUR NGROK URL (e.g., https://xxxx-xx-xx-xx-xx.ngrok-free.app)
-OLLAMA_URL = "https://belfast-nations-excited-mandatory.trycloudflare.com/api/generate" 
+OLLAMA_URL = "https://52d3de98efc68044-35-150-41-18.serveousercontent.com/api/generate" 
 MODEL_NAME = "gemma:2b"
 
 class ChatRequest(BaseModel):
